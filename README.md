@@ -37,6 +37,7 @@ A lightweight system tray application to monitor Ollama AI models with real-time
 
 ## 🚀 Installation
 You need to have [Ollama](https://github.com/jmorganca/ollama) installed and configured 😊
+
 ### Option 1: Download Executable
 1. Go to [Releases](https://github.com/ysfemreAlbyrk/ollama-monitor/releases)
 2. Download latest `OllamaMonitor.exe`
@@ -69,6 +70,12 @@ pip install pyinstaller
 pyinstaller --clean --noconsole --icon=icons/icon.ico --add-data "icons/*.png;icons" --add-data "settings.json;." ollama_monitor.py
 ```
 4. Find the executable in `dist/ollama_monitor` directory
+
+### I can't see the system tray icon 🤔
+If the system tray icon is not visible, you may need to enable it in Windows settings:
+1. Press right click on the taskbar and select `Taskbar Settings`
+2. Click on `Select which icons appear on the taskbar`
+3. Find `OllamaMonitor.exe` and make sure it's turned on
 
 ## 📖 Usage
 
