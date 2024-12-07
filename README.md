@@ -1,6 +1,12 @@
-# Ollama Monitor
-
+<p align="center">
+  <picture>
+    <source srcset="./icons/icon.ico">
+    <img src="./icons/icon.ico">
+  </picture>
+</p>
 <div align="center">
+  
+# Ollama Monitor
 
 [![Python 3.8+](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![Windows](https://img.shields.io/badge/Platform-Windows-blue.svg)](https://www.microsoft.com/windows)
