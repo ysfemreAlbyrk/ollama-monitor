@@ -20,4 +20,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Blue: No model running
   - Red: Ollama service not running
 
-[1.0.0]: https://github.com/ysfemreAlbyrk/ollama-monitor
+[1.0.0]: https://github.com/ysfemreAlbyrk/ollama-monitor/releases/tag/v1.0.0
