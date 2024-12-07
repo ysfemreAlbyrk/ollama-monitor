@@ -174,7 +174,7 @@ class SettingsWindow:
         github_link.bind(
             "<Button-1>", 
             lambda e: webbrowser.open(
-                "https://github.com/yedincisen/ollama-monitor"
+                "https://github.com/ysfemreAlbyrk/ollama-monitor"
             )
         )
         

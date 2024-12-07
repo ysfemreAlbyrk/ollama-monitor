@@ -32,14 +32,14 @@ A lightweight system tray application to monitor Ollama AI models with real-time
 ## 🚀 Installation
 You need to have [Ollama](https://github.com/jmorganca/ollama) installed and configured 😊
 ### Option 1: Download Executable
-1. Go to [Releases](https://github.com/yedincisen/ollama-monitor/releases)
+1. Go to [Releases](https://github.com/ysfemreAlbyrk/ollama-monitor)
 2. Download `OllamaMonitor.exe`
 3. Run the executable
 
 ### Option 2: Run from Source
 1. Clone the repository
 ```bash
-git clone https://github.com/yedincisen/ollama-monitor.git
+git clone https://github.com/ysfemreAlbyrk/ollama-monitor
 ```
 
 2. Install dependencies
