@@ -24,6 +24,7 @@ A lightweight system tray application to monitor Ollama AI models with real-time
 - 🔔 Clean and minimal notifications
 - 🚀 Windows startup configuration
 - ⚙️ Customizable API connection settings
+- 🌐 Comprehensive proxy support with authentication
 - 🎯 Color-coded status indicators:
   - 🟢 Green: Model active and running
   - 🔵 Blue: No model running
@@ -93,9 +94,22 @@ To configure the application:
 1. Right-click the tray icon
 2. Select "Settings"
 3. You can customize:
-   - API Host (default: localhost)
-   - API Port (default: 11434)
+   - API URL (supports proxy with authentication)
+   - Run at Windows startup
    - Start with Windows option
+
+Example URLs:
+- Direct connection: `http://localhost:11434`
+- With proxy: `http://proxy.example.com:8080`
+- With proxy auth: `http://username:password@proxy.example.com:8080`
+
+### Logs
+
+Application logs are stored in:
+```
+%APPDATA%/OllamaMonitor/logs/ollama_monitor_YYYYMMDD.log
+```
+Please send logs to [GitHub](https://github.com/ysfemreAlbyrk/ollama-monitor/issues) if you encounter any issues.
 
 ## 🔧 Development
 ### Version Management

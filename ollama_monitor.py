@@ -10,16 +10,63 @@ import sys
 import threading
 import time
 import webbrowser
+import logging
+from datetime import datetime
+from logging.handlers import RotatingFileHandler
 from typing import Optional
+from urllib.parse import urlparse
 
 import pystray
-import requests
+import httpx
 from PIL import Image
 from tkinter import ttk
 import tkinter as tk
+from tkinter import messagebox
 import winreg
 
 from __version__ import __version__, __author__, __copyright__
+
+def setup_logging():
+    """Setup logging configuration."""
+    log_dir = os.path.join(os.getenv('APPDATA'), 'OllamaMonitor', 'logs')
+    os.makedirs(log_dir, exist_ok=True)
+    
+    # Log file with date
+    log_file = os.path.join(
+        log_dir, 
+        f'ollama_monitor_{datetime.now().strftime("%Y%m%d")}.log'
+    )
+    
+    # Create rotating file handler (max 5MB per file, keep 5 backup files)
+    file_handler = RotatingFileHandler(
+        log_file,
+        maxBytes=5*1024*1024,  # 5MB
+        backupCount=5,
+        encoding='utf-8'
+    )
+    
+    # Create console handler
+    console_handler = logging.StreamHandler()
+    
+    # Create formatters and add it to the handlers
+    file_formatter = logging.Formatter(
+        '%(asctime)s [%(levelname)s] %(message)s'
+    )
+    console_formatter = logging.Formatter(
+        '[%(levelname)s] %(message)s'
+    )
+    file_handler.setFormatter(file_formatter)
+    console_handler.setFormatter(console_formatter)
+    
+    # Get the logger
+    logger = logging.getLogger('OllamaMonitor')
+    logger.setLevel(logging.INFO)
+    
+    # Add the handlers to the logger
+    logger.addHandler(file_handler)
+    logger.addHandler(console_handler)
+    
+    return logger
 
 class SettingsWindow:
     """Settings window for Ollama Monitor configuration."""
@@ -89,49 +136,27 @@ class SettingsWindow:
         )
         api_frame.pack(fill="x", padx=10, pady=5)
         
-        # Host setting
-        host_frame = ttk.Frame(api_frame)
-        host_frame.pack(fill="x", pady=2)
+        # API URL setting
+        url_frame = ttk.Frame(api_frame)
+        url_frame.pack(fill="x", pady=2)
         
         ttk.Label(
-            host_frame, 
-            text="Host:"
+            url_frame, 
+            text="Ollama URL:"
         ).pack(side="left")
         
-        self.host_var = tk.StringVar(
+        self.api_url_var = tk.StringVar(
             value=self.monitor.settings.get(
-                'api_host', 
-                self.monitor.DEFAULT_API_HOST
+                'api_url', 
+                f'http://{self.monitor.DEFAULT_API_HOST}:{self.monitor.DEFAULT_API_PORT}'
             )
         )
-        host_entry = ttk.Entry(
-            host_frame,
-            textvariable=self.host_var,
+        url_entry = ttk.Entry(
+            url_frame,
+            textvariable=self.api_url_var,
             width=30
         )
-        host_entry.pack(side="right")
-        
-        # Port setting
-        port_frame = ttk.Frame(api_frame)
-        port_frame.pack(fill="x", pady=2)
-        
-        ttk.Label(
-            port_frame, 
-            text="Port:"
-        ).pack(side="left")
-        
-        self.port_var = tk.StringVar(
-            value=self.monitor.settings.get(
-                'api_port', 
-                self.monitor.DEFAULT_API_PORT
-            )
-        )
-        port_entry = ttk.Entry(
-            port_frame,
-            textvariable=self.port_var,
-            width=30
-        )
-        port_entry.pack(side="right")
+        url_entry.pack(side="right")
         
         # Save API settings button
         save_api_btn = ttk.Button(
@@ -228,18 +253,36 @@ class SettingsWindow:
             
             winreg.CloseKey(key)
         except Exception as e:
-            self.monitor.icon.notify(
-                "Failed to save startup setting!"
-            )
+            self.monitor.logger.error(f"Failed to save startup setting: {str(e)}")
     
     def save_api_settings(self):
-        """Save API connection settings."""
-        self.monitor.settings['api_host'] = self.host_var.get()
-        self.monitor.settings['api_port'] = self.port_var.get()
-        self.monitor.save_settings()
-        self.monitor.icon.notify(
-            "API settings saved! Changes will take effect immediately."
-        )
+        """Save API settings and reinitialize client."""
+        try:
+            api_url = self.api_url_var.get().strip()
+            
+            # Basic URL validation
+            parsed = urlparse(api_url)
+            if not all([parsed.scheme, parsed.netloc]):
+                raise ValueError("Invalid URL format")
+            
+            # Save new settings
+            self.monitor.settings['api_url'] = api_url
+            self.monitor.save_settings()
+            
+            # Reinitialize client
+            if hasattr(self.monitor, 'client'):
+                self.monitor.client.close()
+            self.monitor._init_http_client()
+            
+            self.window.destroy()
+            self.monitor.logger.info("API settings saved and connection updated!")
+            self.monitor.icon.notify("API settings saved and connection updated!")
+            
+        except Exception as e:
+            messagebox.showerror(
+                "Error",
+                f"Invalid API URL: {str(e)}"
+            )
 
 
 class CustomMenuItem(pystray.MenuItem):
@@ -273,6 +316,10 @@ class OllamaMonitor:
     
     def __init__(self):
         """Initialize the Ollama Monitor application."""
+        # Setup logging
+        self.logger = setup_logging()
+        self.logger.info(f"Starting Ollama Monitor v{__version__}")
+        
         self.current_model = "Waiting..."
         self.icon: Optional[pystray.Icon] = None
         self.should_run = True
@@ -295,6 +342,38 @@ class OllamaMonitor:
         )
         os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)
         self.load_settings()
+        
+        # Initialize HTTP client with configuration
+        self._init_http_client()
+
+    def _init_http_client(self):
+        """Initialize HTTP client with current settings."""
+        try:
+            # Parse URL for authentication
+            url = self.api_url
+            parsed_url = urlparse(url)
+            
+            self.logger.info(f"Initializing HTTP client with URL: {url}")
+            
+            # Setup client config
+            client_config = {
+                'verify': False,  # Disable SSL verification for proxy support
+                'follow_redirects': True
+            }
+
+            # If URL contains authentication, set it up in client
+            if parsed_url.username and parsed_url.password:
+                auth = (parsed_url.username, parsed_url.password)
+                client_config['auth'] = auth
+                self.logger.info("Using URL authentication")
+
+            # Create client with config
+            self.client = httpx.Client(**client_config)
+            self.logger.info("HTTP client initialized successfully")
+            
+        except Exception as e:
+            self.logger.error(f"Error initializing HTTP client: {str(e)}")
+            raise
 
     def load_settings(self):
         """Load application settings from JSON file."""
@@ -302,21 +381,29 @@ class OllamaMonitor:
             if os.path.exists(self.settings_file):
                 with open(self.settings_file, 'r') as f:
                     self.settings = json.load(f)
+                    self.logger.info("Settings loaded successfully")
+                    
+                    # Convert old settings format if needed
+                    if 'api_host' in self.settings and 'api_port' in self.settings:
+                        host = self.settings.pop('api_host')
+                        port = self.settings.pop('api_port')
+                        self.settings['api_url'] = f'http://{host}:{port}'
+                        self.save_settings()
+                        self.logger.info("Converted old settings format to new URL format")
             else:
                 # Default settings
                 self.settings = {
                     'startup': False,
-                    'api_host': self.DEFAULT_API_HOST,
-                    'api_port': self.DEFAULT_API_PORT
+                    'api_url': f'http://{self.DEFAULT_API_HOST}:{self.DEFAULT_API_PORT}'
                 }
                 # Save default settings
                 self.save_settings()
+                self.logger.info("Created default settings")
         except Exception as e:
-            print(f"Error loading settings: {e}")
+            self.logger.error(f"Error loading settings: {str(e)}")
             self.settings = {
                 'startup': False,
-                'api_host': self.DEFAULT_API_HOST,
-                'api_port': self.DEFAULT_API_PORT
+                'api_url': f'http://{self.DEFAULT_API_HOST}:{self.DEFAULT_API_PORT}'
             }
 
     def save_settings(self):
@@ -324,19 +411,63 @@ class OllamaMonitor:
         try:
             with open(self.settings_file, 'w') as f:
                 json.dump(self.settings, f, indent=4)
+            self.logger.info("Settings saved successfully")
         except Exception as e:
-            print(f"Error saving settings: {e}")
-    
-    def show_settings(self):
-        """Show the settings window."""
-        SettingsWindow(self)
+            self.logger.error(f"Error saving settings: {str(e)}")
 
-    @property
-    def api_url(self) -> str:
-        """Get the full API URL based on current settings."""
-        host = self.settings.get('api_host', self.DEFAULT_API_HOST)
-        port = self.settings.get('api_port', self.DEFAULT_API_PORT)
-        return f"http://{host}:{port}"
+    def get_running_models(self) -> str:
+        """
+        Get information about running Ollama models.
+        
+        Returns:
+            Status message about running models
+        """
+        try:
+            response = self.client.get(
+                f'{self.api_url}/api/ps',
+                timeout=2
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                running_models = data.get('models', [])
+                
+                if running_models:
+                    model = running_models[0]
+                    model_info = (
+                        f"{model['name']} "
+                        f"({model['details']['parameter_size']})"
+                    )
+                    
+                    if self.last_status != model_info:
+                        self.logger.info(f"Model status changed: {model_info}")
+                        self.icon.notify(f"{model_info}")
+                        self.last_status = model_info
+                    return model_info
+                
+                if self.last_status != "No Model Running":
+                    self.logger.info("No model running")
+                    self.icon.notify("Model Stopped")
+                    self.last_status = "No Model Running"
+                return "No Model Running"
+                
+            self.logger.warning(f"API returned status code: {response.status_code}")
+            return "Ollama Not Running"
+            
+        except httpx.TimeoutException:
+            self.logger.error("API request timed out")
+            return "Ollama Not Running"
+            
+        except httpx.ConnectError as e:
+            self.logger.error(f"Connection error: {str(e)}")
+            if self.last_status != "Ollama Not Running":
+                self.icon.notify("Ollama Service Stopped")
+                self.last_status = "Ollama Not Running"
+            return "Ollama Not Running"
+            
+        except Exception as e:
+            self.logger.error(f"Unexpected error in get_running_models: {str(e)}")
+            return "Ollama Not Running"
 
     def create_icon(self, status: str) -> Image.Image:
         """
@@ -356,56 +487,6 @@ class OllamaMonitor:
             icon_path = self.icon_green
             
         return Image.open(icon_path)
-
-    def get_running_models(self) -> str:
-        """
-        Get information about running Ollama models.
-        
-        Returns:
-            Status message about running models
-        """
-        try:
-            response = requests.get(
-                f'{self.api_url}/api/ps',
-                timeout=2
-            )
-            
-            if response.status_code == 200:
-                data = response.json()
-                running_models = data.get('models', [])
-                
-                if running_models:
-                    model = running_models[0]
-                    model_info = (
-                        f"{model['name']} "
-                        f"({model['details']['parameter_size']})"
-                    )
-                    
-                    if self.last_status != model_info:
-                        self.icon.notify(
-                            f"{model_info}"
-                        )
-                        self.last_status = model_info
-                    return model_info
-                
-                if self.last_status != "No Model Running":
-                    self.icon.notify("Model Stopped")
-                    self.last_status = "No Model Running"
-                return "No Model Running"
-                
-            return "Ollama Not Running"
-            
-        except requests.exceptions.Timeout:
-            return "Ollama Not Running"
-            
-        except requests.exceptions.ConnectionError:
-            if self.last_status != "Ollama Not Running":
-                self.icon.notify("Ollama Service Stopped")
-                self.last_status = "Ollama Not Running"
-            return "Ollama Not Running"
-            
-        except Exception:
-            return "Ollama Not Running"
 
     def create_menu(self) -> pystray.Menu:
         """
@@ -455,6 +536,25 @@ class OllamaMonitor:
         self.should_run = False
         if self.icon:
             self.icon.stop()
+
+    def show_settings(self):
+        """Show the settings window."""
+        SettingsWindow(self)
+
+    @property
+    def api_url(self) -> str:
+        """Get the API URL from settings."""
+        return self.settings.get(
+            'api_url',
+            f'http://{self.DEFAULT_API_HOST}:{self.DEFAULT_API_PORT}'
+        )
+
+    def __del__(self):
+        """Cleanup when the object is destroyed."""
+        if hasattr(self, 'client'):
+            self.client.close()
+            self.logger.info("HTTP client closed")
+        self.logger.info("Ollama Monitor stopped")
 
 
 if __name__ == "__main__":
