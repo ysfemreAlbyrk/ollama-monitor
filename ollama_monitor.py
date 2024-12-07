@@ -288,35 +288,44 @@ class OllamaMonitor:
         
         # Load settings
         self.settings_file = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), 
+            os.getenv('APPDATA'),
+            'OllamaMonitor',
             'settings.json'
         )
+        os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)
         self.load_settings()
 
     def load_settings(self):
         """Load application settings from JSON file."""
         try:
-            with open(self.settings_file, 'r') as f:
-                self.settings = json.load(f)
-        except (FileNotFoundError, json.JSONDecodeError):
+            if os.path.exists(self.settings_file):
+                with open(self.settings_file, 'r') as f:
+                    self.settings = json.load(f)
+            else:
+                # Default settings
+                self.settings = {
+                    'startup': False,
+                    'api_host': self.DEFAULT_API_HOST,
+                    'api_port': self.DEFAULT_API_PORT
+                }
+                # Save default settings
+                self.save_settings()
+        except Exception as e:
+            print(f"Error loading settings: {e}")
             self.settings = {
                 'startup': False,
                 'api_host': self.DEFAULT_API_HOST,
                 'api_port': self.DEFAULT_API_PORT
             }
-            self.save_settings()
-    
+
     def save_settings(self):
         """Save application settings to JSON file."""
         try:
             with open(self.settings_file, 'w') as f:
-                json.dump(self.settings, f)
+                json.dump(self.settings, f, indent=4)
         except Exception as e:
-            if self.icon:
-                self.icon.notify(
-                    "Failed to save settings!"
-                )
-
+            print(f"Error saving settings: {e}")
+    
     def show_settings(self):
         """Show the settings window."""
         SettingsWindow(self)
