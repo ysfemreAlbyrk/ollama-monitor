@@ -54,28 +54,19 @@ git clone https://github.com/ysfemreAlbyrk/ollama-monitor.git
 pip install -r requirements.txt
 ```
 
-3. Run the application
+3. Run directly
 ```bash
 python ollama_monitor.py
 ```
 
-### Option 3: Build Executable from Source
-1. Clone the repository and install dependencies (follow Option 2 steps)
-2. Install PyInstaller
-```bash
-pip install pyinstaller
-```
-3. Create executable
-```bash
-pyinstaller --clean --noconsole --icon=icons/icon.ico --add-data "icons/*.png;icons" --add-data "settings.json;." ollama_monitor.py
-```
-4. Find the executable in `dist/ollama_monitor` directory
+### Option 3: Build from Source
+1. Clone the repository and install dependencies (steps 1-2 above)
 
-### I can't see the system tray icon 🤔
-If the system tray icon is not visible, you may need to enable it in Windows settings:
-1. Press right click on the taskbar and select `Taskbar Settings`
-2. Click on `Select which icons appear on the taskbar`
-3. Find `OllamaMonitor.exe` and make sure it's turned on
+2. Build executable
+```bash
+python build.py
+```
+The executable will be created in the `dist` directory.
 
 ## 📖 Usage
 
@@ -90,6 +81,12 @@ If the system tray icon is not visible, you may need to enable it in Windows set
    - Open settings
    - Exit the application
 
+### I can't see the system tray icon 🤔
+If the system tray icon is not visible, you may need to enable it in Windows settings:
+1. Press right click on the taskbar and select `Taskbar Settings`
+2. Click on `Select which icons appear on the taskbar`
+3. Find `OllamaMonitor.exe` and make sure it's turned on
+
 ### Settings
 
 To configure the application:
@@ -99,6 +96,13 @@ To configure the application:
    - API Host (default: localhost)
    - API Port (default: 11434)
    - Start with Windows option
+
+## 🔧 Development
+### Version Management
+The version information is centrally managed in `__version__.py`. To update the version:
+
+1. Update the version in `__version__.py`
+2. Run `python build.py` to rebuild the executable
 
 ## 📜 Changelog
 

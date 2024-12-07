@@ -19,6 +19,7 @@ from tkinter import ttk
 import tkinter as tk
 import winreg
 
+from __version__ import __version__, __author__, __copyright__
 
 class SettingsWindow:
     """Settings window for Ollama Monitor configuration."""
@@ -151,7 +152,7 @@ class SettingsWindow:
         # Version info
         version_label = ttk.Label(
             about_frame, 
-            text="Version: 1.0.0"
+            text=f"Version: {__version__}"
         )
         version_label.pack(anchor="w")
         
