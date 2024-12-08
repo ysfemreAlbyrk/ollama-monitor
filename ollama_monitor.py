@@ -5,23 +5,22 @@ Created by: Yusuf Emre ALBAYRAK
 """
 
 import json
+import logging
 import os
 import sys
 import threading
 import time
 import webbrowser
-import logging
 from datetime import datetime
 from logging.handlers import RotatingFileHandler
+from tkinter import Tk, BooleanVar, StringVar
+from tkinter import ttk, messagebox
 from typing import Optional
 from urllib.parse import urlparse
 
 import pystray
 import httpx
 from PIL import Image
-from tkinter import ttk
-import tkinter as tk
-from tkinter import messagebox
 import winreg
 
 from __version__ import __version__, __author__, __copyright__
@@ -79,7 +78,7 @@ class SettingsWindow:
             monitor: Reference to the main OllamaMonitor instance
         """
         self.monitor = monitor
-        self.window = tk.Tk()
+        self.window = Tk()
         self.window.title("Ollama Monitor - Settings")
         self.window.geometry("400x460")
         self.window.resizable(False, False)
@@ -117,7 +116,7 @@ class SettingsWindow:
         settings_frame.pack(fill="x", padx=10, pady=5)
         
         # Startup setting
-        self.startup_var = tk.BooleanVar(
+        self.startup_var = BooleanVar(
             value=self.monitor.settings.get('startup', False)
         )
         startup_check = ttk.Checkbutton(
@@ -145,7 +144,7 @@ class SettingsWindow:
             text="Ollama URL:"
         ).pack(side="left")
         
-        self.api_url_var = tk.StringVar(
+        self.api_url_var = StringVar(
             value=self.monitor.settings.get(
                 'api_url', 
                 f'http://{self.monitor.DEFAULT_API_HOST}:{self.monitor.DEFAULT_API_PORT}'
