@@ -237,7 +237,8 @@ class SettingsWindow:
             )
             
             if startup:
-                executable_path = os.path.abspath(sys.argv[0])
+                # Use sys.executable for a more reliable path to the bundled .exe
+                executable_path = sys.executable if hasattr(sys, 'frozen') else os.path.abspath(sys.argv[0])
                 winreg.SetValueEx(
                     key, 
                     "OllamaMonitor", 
@@ -534,8 +535,17 @@ class OllamaMonitor:
     def stop(self):
         """Stop the Ollama Monitor application."""
         self.should_run = False
+        self.logger.info("Stopping Ollama Monitor...")
+        if hasattr(self, 'client') and self.client is not None:
+            try:
+                self.client.close()
+                self.logger.info("HTTP client closed.")
+            except Exception as e:
+                self.logger.error(f"Error closing HTTP client: {str(e)}")
+
         if self.icon:
             self.icon.stop()
+            self.logger.info("System tray icon stopped.")
 
     def show_settings(self):
         """Show the settings window."""
@@ -551,10 +561,8 @@ class OllamaMonitor:
 
     def __del__(self):
         """Cleanup when the object is destroyed."""
-        if hasattr(self, 'client'):
-            self.client.close()
-            self.logger.info("HTTP client closed")
-        self.logger.info("Ollama Monitor stopped")
+        # self.client.close() is now handled in stop()
+        self.logger.info("Ollama Monitor object being deleted.")
 
 
 if __name__ == "__main__":
