@@ -8,8 +8,6 @@ import (
 	"net/url"
 	"strings"
 	"time"
-
-	"github.com/gen2brain/beeep"
 )
 
 // States
@@ -34,7 +32,8 @@ type PSResponse struct {
 }
 
 var (
-	client *http.Client
+	client            *http.Client
+	lastRunningModels []string
 )
 
 func initHTTPClient() {
@@ -48,6 +47,48 @@ func initHTTPClient() {
 		Transport: tr,
 		Timeout:   2 * time.Second,
 	}
+}
+
+func sliceContains(slice []string, val string) bool {
+	for _, item := range slice {
+		if item == val {
+			return true
+		}
+	}
+	return false
+}
+
+func notifyModelChanges(currentModels []string) {
+	// If it's the first run, populate lastRunningModels but don't notify to avoid startup spam
+	if lastStatus == "" {
+		lastRunningModels = currentModels
+		lastStatus = strings.Join(currentModels, ", ")
+		return
+	}
+
+	var started []string
+	for _, m := range currentModels {
+		if !sliceContains(lastRunningModels, m) {
+			started = append(started, m)
+		}
+	}
+
+	var stopped []string
+	for _, m := range lastRunningModels {
+		if !sliceContains(currentModels, m) {
+			stopped = append(stopped, m)
+		}
+	}
+
+	if len(started) > 0 {
+		sendNotification("Model Started", strings.Join(started, ", "))
+	}
+	if len(stopped) > 0 {
+		sendNotification("Model Stopped", strings.Join(stopped, ", "))
+	}
+
+	lastRunningModels = currentModels
+	lastStatus = strings.Join(currentModels, ", ")
 }
 
 func getRunningModels() (int, []string) {
@@ -78,8 +119,9 @@ func getRunningModels() (int, []string) {
 	if err != nil {
 		if lastStatus != "Ollama Not Running" {
 			appLogger.Printf("Connection error: %v", err)
-			_ = beeep.Notify("Ollama Service Stopped", "Could not connect to Ollama", "")
+			sendNotification("Ollama Service Stopped", "Could not connect to Ollama")
 			lastStatus = "Ollama Not Running"
+			lastRunningModels = nil
 		}
 		return StateOffline, nil
 	}
@@ -101,19 +143,14 @@ func getRunningModels() (int, []string) {
 		for _, m := range psResp.Models {
 			models = append(models, fmt.Sprintf("%s (%s)", m.Name, m.Details.ParameterSize))
 		}
-		modelInfo := strings.Join(models, ", ")
-
-		if lastStatus != modelInfo {
-			appLogger.Printf("Model status changed: %s", modelInfo)
-			_ = beeep.Notify("Model Running", modelInfo, "")
-			lastStatus = modelInfo
-		}
+		
+		notifyModelChanges(models)
 		return StateActive, models
 	}
 
 	if lastStatus != "No Model Running" {
 		appLogger.Println("No model running")
-		_ = beeep.Notify("Model Stopped", "All models unloaded", "")
+		notifyModelChanges(nil)
 		lastStatus = "No Model Running"
 	}
 	return StateIdle, nil

@@ -7,7 +7,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gen2brain/beeep"
 	"github.com/getlantern/systray"
 	"github.com/ncruces/zenity"
 )
@@ -59,7 +58,7 @@ func changeAPIURL() {
 
 	saveSettings()
 	
-	_ = beeep.Notify("Settings Saved", fmt.Sprintf("Ollama API URL updated to: %s", newURL), "")
+	sendNotification("Settings Saved", fmt.Sprintf("Ollama API URL updated to: %s", newURL))
 }
 
 func showAbout() {
@@ -215,6 +214,7 @@ func main() {
 	loadSettings()
 	initHTTPClient()
 	initIcons()
+	registerAUMID()
 
 	systray.Run(onReady, onExit)
 }
