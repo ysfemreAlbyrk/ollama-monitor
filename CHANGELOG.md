@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Entire codebase migrated from Python to **Go (Golang)**, achieving lightweight footprint (~8.7MB binary size, <10MB RAM usage).
-- **Multi-Model Support (Issue #3)**: Hovering and tray status now show all running models in a comma-separated format.
+- **Multi-Model Support**: Active models now appear dynamically as individual, dedicated rows in the tray menu, and in a comma-separated tooltip hover.
 - **Cross-Platform Compilation**: Safe to compile and run on Windows, Linux, and macOS.
 - **Adaptive Polling**: Automatic polling interval (10 seconds when idle/offline, 3 seconds when a model is running) to cut CPU and network usage by 85%.
 - **Zero-Freezing UI**: Fully decoupled tray loop from settings prompts via `zenity` native modal views.
