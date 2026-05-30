@@ -2,13 +2,13 @@
     "FixedFileInfo": {
         "FileVersion": {
             "Major": 1,
-            "Minor": 1,
+            "Minor": 2,
             "Patch": 0,
             "Build": 0
         },
         "ProductVersion": {
             "Major": 1,
-            "Minor": 1,
+            "Minor": 2,
             "Patch": 0,
             "Build": 0
         },
@@ -21,12 +21,12 @@
     "StringFileInfo": {
         "CompanyName": "Yusuf Emre ALBAYRAK",
         "FileDescription": "System tray application to monitor Ollama AI models",
-        "FileVersion": "1.1.0",
+        "FileVersion": "1.2.0",
         "InternalName": "OllamaMonitor",
         "LegalCopyright": "Copyright (c) 2026 Yusuf Emre ALBAYRAK",
         "OriginalFilename": "OllamaMonitor.exe",
         "ProductName": "Ollama Monitor",
-        "ProductVersion": "1.1.0"
+        "ProductVersion": "1.2.0"
     },
     "VarFileInfo": {
         "Translation": {

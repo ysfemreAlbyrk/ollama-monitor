@@ -12,6 +12,13 @@ import (
 	"github.com/gen2brain/beeep"
 )
 
+// States
+const (
+	StateOffline = iota
+	StateIdle
+	StateActive
+)
+
 // Ollama API response structures
 type ModelDetails struct {
 	ParameterSize string `json:"parameter_size"`
@@ -43,7 +50,7 @@ func initHTTPClient() {
 	}
 }
 
-func getRunningModels() string {
+func getRunningModels() (int, []string) {
 	settingsLock.Lock()
 	apiURL := settings.APIURL
 	settingsLock.Unlock()
@@ -51,14 +58,14 @@ func getRunningModels() string {
 	parsedURL, err := url.Parse(apiURL)
 	if err != nil {
 		appLogger.Printf("Invalid API URL: %v", err)
-		return "Ollama Not Running"
+		return StateOffline, nil
 	}
 
 	endpoint := fmt.Sprintf("%s/api/ps", apiURL)
 	req, err := http.NewRequest("GET", endpoint, nil)
 	if err != nil {
 		appLogger.Printf("Failed to create request: %v", err)
-		return "Ollama Not Running"
+		return StateOffline, nil
 	}
 
 	// Support basic authentication if username/password is present in the URL
@@ -74,19 +81,19 @@ func getRunningModels() string {
 			_ = beeep.Notify("Ollama Service Stopped", "Could not connect to Ollama", "")
 			lastStatus = "Ollama Not Running"
 		}
-		return "Ollama Not Running"
+		return StateOffline, nil
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		appLogger.Printf("API returned status code: %d", resp.StatusCode)
-		return "Ollama Not Running"
+		return StateOffline, nil
 	}
 
 	var psResp PSResponse
 	if err := json.NewDecoder(resp.Body).Decode(&psResp); err != nil {
 		appLogger.Printf("Failed to decode response: %v", err)
-		return "Ollama Not Running"
+		return StateOffline, nil
 	}
 
 	if len(psResp.Models) > 0 {
@@ -101,7 +108,7 @@ func getRunningModels() string {
 			_ = beeep.Notify("Model Running", modelInfo, "")
 			lastStatus = modelInfo
 		}
-		return modelInfo
+		return StateActive, models
 	}
 
 	if lastStatus != "No Model Running" {
@@ -109,5 +116,5 @@ func getRunningModels() string {
 		_ = beeep.Notify("Model Stopped", "All models unloaded", "")
 		lastStatus = "No Model Running"
 	}
-	return "No Model Running"
+	return StateIdle, nil
 }

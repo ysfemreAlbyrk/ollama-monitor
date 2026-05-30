@@ -14,7 +14,7 @@ import (
 
 // Version info
 const (
-	Version   = "1.1.0"
+	Version   = "1.2.0"
 	Author    = "Yusuf Emre ALBAYRAK"
 	AppName   = "OllamaMonitor"
 	APIHost   = "localhost"
@@ -22,9 +22,11 @@ const (
 )
 
 var (
-	settingsLock  sync.Mutex
-	currentModel  = "Waiting..."
-	lastStatus    = ""
+	settingsLock       sync.Mutex
+	currentModel       = "Waiting..."
+	lastStatus         = ""
+	mStatusPlaceholder *systray.MenuItem
+	mModelSlots        []*systray.MenuItem
 )
 
 func changeAPIURL() {
@@ -67,34 +69,61 @@ func showAbout() {
 	)
 }
 
-func updateStatusLoop(mStatus *systray.MenuItem) {
+func updateStatusLoop() {
+	interval := 2 * time.Second
 	for {
-		status := getRunningModels()
-		currentModel = status
+		state, models := getRunningModels()
 
-		// Update system tray icon dynamically
-		if strings.Contains(status, "Ollama Not Running") {
+		switch state {
+		case StateOffline:
 			systray.SetIcon(iconRed)
 			systray.SetTooltip("Ollama Service: Offline")
-			mStatus.SetTitle("Ollama Not Running")
-		} else if strings.Contains(status, "No Model Running") {
+			mStatusPlaceholder.SetTitle("Ollama Not Running")
+			mStatusPlaceholder.Show()
+			
+			for _, m := range mModelSlots {
+				m.Hide()
+			}
+			currentModel = "Ollama Not Running"
+			interval = 10 * time.Second
+
+		case StateIdle:
 			systray.SetIcon(iconBlue)
 			systray.SetTooltip("Ollama Service: Idle")
-			mStatus.SetTitle("No Model Running")
-		} else {
+			mStatusPlaceholder.SetTitle("No Model Running")
+			mStatusPlaceholder.Show()
+			
+			for _, m := range mModelSlots {
+				m.Hide()
+			}
+			currentModel = "No Model Running"
+			interval = 10 * time.Second
+
+		case StateActive:
 			systray.SetIcon(iconGreen)
-			// Truncate tooltip if it is too long for Windows limits (128 chars)
+			
+			status := strings.Join(models, ", ")
 			tooltip := fmt.Sprintf("Models: %s", status)
 			if len(tooltip) > 127 {
 				tooltip = tooltip[:124] + "..."
 			}
 			systray.SetTooltip(tooltip)
 			
-			// Show actual models in menu item
-			mStatus.SetTitle(status)
+			mStatusPlaceholder.Hide()
+			
+			for i := 0; i < len(mModelSlots); i++ {
+				if i < len(models) {
+					mModelSlots[i].SetTitle(models[i])
+					mModelSlots[i].Show()
+				} else {
+					mModelSlots[i].Hide()
+				}
+			}
+			currentModel = status
+			interval = 3 * time.Second
 		}
 
-		time.Sleep(2 * time.Second)
+		time.Sleep(interval)
 	}
 }
 
@@ -103,8 +132,15 @@ func onReady() {
 	systray.SetTitle("Ollama Monitor")
 	systray.SetTooltip("Ollama Monitor - Loading...")
 
-	mStatus := systray.AddMenuItem("Waiting...", "")
-	mStatus.Disable()
+	mStatusPlaceholder = systray.AddMenuItem("Waiting...", "")
+	mStatusPlaceholder.Disable()
+
+	for i := 0; i < 5; i++ {
+		m := systray.AddMenuItem("", "")
+		m.Disable()
+		m.Hide()
+		mModelSlots = append(mModelSlots, m)
+	}
 	
 	systray.AddSeparator()
 	
@@ -125,7 +161,7 @@ func onReady() {
 	mExit := systray.AddMenuItem("Exit", "")
 
 	// Start status updater loop
-	go updateStatusLoop(mStatus)
+	go updateStatusLoop()
 
 	// Wait for actions
 	go func() {
