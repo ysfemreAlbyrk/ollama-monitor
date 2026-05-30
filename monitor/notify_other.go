@@ -1,6 +1,6 @@
 //go:build !windows
 
-package main
+package monitor
 
 import (
 	"github.com/gen2brain/beeep"

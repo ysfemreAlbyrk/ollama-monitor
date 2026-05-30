@@ -1,10 +1,11 @@
-package main
+package monitor
 
 import (
 	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
+	"sync"
 )
 
 // Settings structure
@@ -16,6 +17,7 @@ type Settings struct {
 var (
 	settings     Settings
 	settingsPath string
+	settingsLock sync.Mutex
 )
 
 func loadSettings() {

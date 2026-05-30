@@ -34,6 +34,6 @@
             "SubLangID": "04b0"
         }
     },
-    "IconPath": "icons/icon.ico",
+    "IconPath": "monitor/icons/icon.ico",
     "ManifestPath": ""
 }

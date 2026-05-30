@@ -1,6 +1,6 @@
 //go:build windows
 
-package main
+package monitor
 
 import (
 	"os"
@@ -19,27 +19,27 @@ func registerAUMID() {
 	if err == nil {
 		defer k.Close()
 		_ = k.SetStringValue("DisplayName", "Ollama Monitor")
-
-		// Extract embedded icon.ico to AppData so Windows toast can load it
+		
+		// Extract embedded blue PNG icon to AppData so Windows toast can load it in the header
 		appData := os.Getenv("APPDATA")
 		iconDir := filepath.Join(appData, AppName)
 		_ = os.MkdirAll(iconDir, 0755)
-
-		iconPath := filepath.Join(iconDir, "icon.ico")
-		_ = os.WriteFile(iconPath, iconIco, 0644)
+		
+		iconPath := filepath.Join(iconDir, "logo.png")
+		_ = os.WriteFile(iconPath, iconBlue, 0644)
 		_ = k.SetStringValue("IconUri", iconPath)
 	}
 }
 
 func sendNotification(title, message string) {
 	appData := os.Getenv("APPDATA")
-	iconPath := filepath.Join(appData, AppName, "icon.ico")
+	iconPath := filepath.Join(appData, AppName, "logo.png")
 
 	notification := toast.Notification{
 		AppID: "OllamaMonitor",
 		Title: title,
 		Body:  message,
-		Icon:  iconPath, // Path to local icon file on disk
+		Icon:  iconPath, // Path to local transparent PNG file on disk
 	}
 	_ = notification.Push()
 }

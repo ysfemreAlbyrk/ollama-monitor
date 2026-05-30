@@ -1,10 +1,10 @@
-package main
+package monitor
 
 import (
 	_ "embed"
 )
 
-// Embed icons
+// Embed icons using paths relative to this file's folder (monitor/icons/)
 //go:embed icons/icon.ico
 var iconIco []byte
 

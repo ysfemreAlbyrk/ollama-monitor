@@ -1,6 +1,6 @@
 //go:build !windows
 
-package main
+package monitor
 
 func toggleStartup(enable bool) error {
 	// Startup configuration not implemented yet on non-Windows platforms
