@@ -3,6 +3,7 @@ module ollamaMonitor
 go 1.25.6
 
 require (
+	git.sr.ht/~jackmordaunt/go-toast v1.1.2
 	github.com/gen2brain/beeep v0.11.2
 	github.com/getlantern/systray v1.2.2
 	github.com/ncruces/zenity v0.10.14
@@ -10,7 +11,6 @@ require (
 )
 
 require (
-	git.sr.ht/~jackmordaunt/go-toast v1.1.2 // indirect
 	github.com/akavel/rsrc v0.10.2 // indirect
 	github.com/dchest/jsmin v0.0.0-20220218165748-59f39799265f // indirect
 	github.com/esiqveland/notify v0.13.3 // indirect
