@@ -1,7 +1,7 @@
 <p align="center">
   <picture>
-    <source srcset="./icons/icon.ico">
-    <img src="./icons/icon.ico" width="64" height="64">
+    <source srcset="./monitor/icons/icon.ico">
+    <img src="./monitor/icons/icon.ico" width="64" height="64">
   </picture>
 </p>
 <div align="center">
@@ -23,12 +23,10 @@ A lightweight cross-platform system tray application to monitor Ollama AI models
 ## ✨ Features
 
 - 🔄 **Real-Time Monitoring**: Dynamic tracking of loaded Ollama models.
-- 🔀 **Multi-Model Support (Issue #3)**: Displays all actively running models as individual dedicated rows in the tray menu and grouped in the hover tooltip.
-- ⚡ **Adaptive Polling**: Intelligent scaling of polling frequency (10 seconds when idle/offline, 3 seconds when models are running) to cut CPU and network usage by 85%.
+- 🔀 **Multi-Model Support**: Displays all actively running models as individual dedicated rows in the tray menu and grouped in the hover tooltip.
 - 🔔 **System Notifications**: Minimal, non-intrusive desktop notifications on model state changes.
 - 🚀 **Windows Startup Configuration**: Native checkmark option directly in the tray menu to automatically run at Windows startup.
 - ⚙️ **Customizable Connection**: Dynamic API URL setup with support for HTTPS proxies and SSL/TLS validation bypass.
-- 🖥️ **Zero-Freezing UI**: Asynchronous dialog management using native OS prompts via `zenity`.
 - 🎯 **Color-Coded Status Indicators**:
   - 🟢 Green: Models are loaded and actively running
   - 🔵 Blue: Ollama service is idle (no model loaded)
