@@ -87,18 +87,6 @@ A lightweight cross-platform system tray application to monitor Ollama AI models
 
 ---
 
-## 🔧 Development & Project Structure
-
-The project has been refactored into a highly modular, clean Go codebase:
-- `main.go`: Application lifecycle, tray setup, and event loop.
-- `api.go`: Ollama API client and multi-model query parser.
-- `config.go`: Settings JSON loading/saving.
-- `icon.go`: Embedded icon resources and PNG-to-ICO runtime packaging.
-- `logging.go`: Rotating file logger.
-- `startup_windows.go` / `startup_other.go`: Platform-specific OS startup registration using Go build tags.
-
----
-
 ## 📜 Changelog
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed version release history.
