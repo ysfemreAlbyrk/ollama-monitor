@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Migrated entire codebase from Python to **Go (Golang)**, achieving lightweight footprint (~8.7MB binary size, <10MB RAM usage).
 
+### Fixed
+- **Windows Toast Notifications**: Resolved "File not Found" errors on Windows by embedding the blue icon directly into the binary (`icon.ico` → `iconBlue` bytes) and writing it to the executable directory at runtime. This ensures the notification service (running in a low-privilege AppContainer sandbox) can always find the icon.
+- **Startup Registration**: Fixed registry path from `AppUserModelId` to `Applications` for proper Windows shell integration.
+
 ## [1.1.0] - 2024-01-15
 
 ### Added
