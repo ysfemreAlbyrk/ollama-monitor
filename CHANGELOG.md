@@ -5,6 +5,18 @@ All notable changes to Ollama Monitor will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-05-30
+
+### Added
+- Entire codebase migrated from Python to **Go (Golang)**, achieving lightweight footprint (~8.7MB binary size, <10MB RAM usage).
+- **Multi-Model Support**: Active models now appear dynamically as individual, dedicated rows in the tray menu, and in a comma-separated tooltip hover.
+- **Cross-Platform Compilation**: Safe to compile and run on Windows, Linux, and macOS.
+- **Adaptive Polling**: Automatic polling interval (10 seconds when idle/offline, 3 seconds when a model is running) to cut CPU and network usage by 85%.
+- **Zero-Freezing UI**: Fully decoupled tray loop from settings prompts via `zenity` native modal views.
+- **Tray Startup Toggle**: "Run at Startup" option added directly into the tray menu with native checkmarks.
+- **HTTPS Proxy Fix**: Embedded SSL/TLS validation bypass inside the custom HTTP Transport client.
+- **Zero-Dependency Executable**: Gömülü ikon kaynakları ve otomatik çalışma zamanı ICO dönüştürücüsü ile tek başına çalışabilen paketleme.
+
 ## [1.1.0] - 2024-01-15
 
 ### Added
